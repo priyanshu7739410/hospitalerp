@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # --------------------------------------------------------
+  # DATABASE SERVICE (PostgreSQL)
+  # --------------------------------------------------------
+  db:
+    # We use the official PostgreSQL image (version 15)
+    image: postgres:15-alpine
+    container_name: hospital_db
+    # We use the environment variables defined in our .env file
+    # This prevents hardcoding passwords in our configuration files
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    # Exposing the port so we can connect to it from our local machine (e.g. via DBeaver or DataGrip)
+    # The format is <host_machine_port>:<container_port>
+    ports:
+      - "5432:5432"
+    # Volumes map a directory on your host machine to a directory inside the container.
+    # Without this, all database data would be destroyed if the container stops.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # If the container crashes, restart it automatically
+    restart: always
+
+  # --------------------------------------------------------
+  # BACKEND SERVICE (FastAPI)
+  # --------------------------------------------------------
+  api:
+    # We build the image using the Dockerfile in the current directory (.)
+    build: .
+    container_name: hospital_api
+    # We pass the environment variables from the .env file into the container
+    env_file:
+      - .env
+    # The API will run on port 8000 inside the container, we expose it to port 8000 on our local machine
+    ports:
+      - "8000:8000"
+    # This is a "bind mount". It links our local directory to the /app directory inside the container.
+    # This means when we edit a python file on our local machine, it instantly updates inside the container.
+    # This is CRITICAL for a good development experience.
+    volumes:
+      - .:/app
+    # The API depends on the database. Docker will ensure the 'db' container starts BEFORE the 'api' container.
+    depends_on:
+      - db
+    # We run uvicorn to start the server. The --reload flag automatically restarts the server on code changes.
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# We declare the volume for persistent database storage
+volumes:
+  postgres_data:
