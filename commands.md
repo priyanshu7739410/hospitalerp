@@ -28,3 +28,14 @@
 **Command:** `docker compose exec api alembic upgrade head`
 **When to use:** Immediately after generating a migration script, or when pulling new code from GitHub.
 **What it does:** Executes the migration scripts against PostgreSQL, physically creating or updating the tables.
+
+---
+
+# Shutdown Commands
+
+### 6. Stop and Remove Containers
+**Command:** `docker compose down`   
+docker compose up -d for opening
+
+**When to use:** When you are done working for the day and want to turn off the server and database.
+**What it does:** Gracefully stops both the `api` and `db` containers and deletes the temporary private network. **Note:** Your database data is 100% safe because it is stored on your permanent host volume (`postgres_data`)! When you run `up -d` tomorrow, all your data will still be there.
